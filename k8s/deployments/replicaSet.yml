@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: goserver
+  labels: 
+    app: goserver
+spec:
+  selector:
+    matchLabels:
+      app: goserver
+  replicas: 2 # => number of pods replicas
+  template: # => template of pod (similar to pod.yml)
+    metadata:
+      labels:
+        app: goserver
+    spec:
+      containers:
+        - name: "goserver"
+          image: "henricker/hello-go"
+
+# Now we can create various pods with the same template,
+# If one pod is down, the replicaSet will create a new pod
+# But if we change the template, the replicaSet will not update the pods
+# => Use deployment to solve this problem

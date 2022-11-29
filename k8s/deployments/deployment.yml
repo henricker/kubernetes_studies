@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment # Unique difference among pod, replicaSet and deployment is kind :D
+metadata:
+  name: goserver
+  labels: 
+    app: goserver
+spec:
+  selector:
+    matchLabels:
+      app: goserver # services and others will use this label to find the pods
+  replicas: 1 # => number of pods replicas
+  template: # => template of pod (similar to pod.yml)
+    metadata:
+      labels:
+        app: goserver
+    spec:
+      containers:
+        - name: "goserver"
+          image: "henricker/hello-go:v2"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 150m
+              memory: 300Mi
+          volumeMounts: 
+            - name: "goserver-family"
+              mountPath: "/go/myfamily"
+              readOnly: true
+          # env: # => environment variables hardcoded
+          #   - name: "NAME"
+          #     value: "Henrique"
+          #   - name: "AGE"
+          #     value: "22"
+          # env: load each key by config map
+          #   - name: "NAME"
+          #     valueFrom:
+          #       configMapKeyRef:
+          #         name: goserver-env
+          #         key: NAME
+          #   - name: "AGE"
+          #     valueFrom:
+          #       configMapKeyRef:
+          #         name: goserver-env
+          #         key: AGE
+          envFrom:  # load all keys by config map
+            - configMapRef:
+                name: goserver-env
+            - secretRef: 
+                name: goserver-secret # => secret is a type of config map, but it is used to store sensitive data with base64 encoding
+
+        
+      volumes: # create a volume to share data between containers
+        - name: "goserver-family"
+          configMap:
+            name: goserver-family-env 
+            items: 
+              - key: members
+                path: members.txt
+
+              
+             
+
+# Now we can create various pods with the same template,
+# And if version image changed in template, the deployment will update the pods

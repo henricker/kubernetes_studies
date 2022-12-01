@@ -16,7 +16,31 @@ spec:
     spec:
       containers:
         - name: "goserver"
-          image: "henricker/hello-go:v2"
+          image: "henricker/hello-go"
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            failureThreshold: 30
+            periodSeconds: 3
+      
+          readinessProbe: # => check if the pod is ready to receive traffic
+            httpGet:
+              path: /healthz
+              port: 80
+            periodSeconds: 3
+            failureThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 10
+          livenessProbe: # Check if pod is alive, if not, restart it
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 1 # => number of times to check if the pod is alive
+            timeoutSeconds: 1 # => time to wait for the pod to respond
+            successThreshold: 1 # => number of times to check if the pod is alive
           resources:
             requests:
               cpu: 100m
@@ -28,22 +52,6 @@ spec:
             - name: "goserver-family"
               mountPath: "/go/myfamily"
               readOnly: true
-          # env: # => environment variables hardcoded
-          #   - name: "NAME"
-          #     value: "Henrique"
-          #   - name: "AGE"
-          #     value: "22"
-          # env: load each key by config map
-          #   - name: "NAME"
-          #     valueFrom:
-          #       configMapKeyRef:
-          #         name: goserver-env
-          #         key: NAME
-          #   - name: "AGE"
-          #     valueFrom:
-          #       configMapKeyRef:
-          #         name: goserver-env
-          #         key: AGE
           envFrom:  # load all keys by config map
             - configMapRef:
                 name: goserver-env
